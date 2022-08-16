@@ -50,7 +50,7 @@ const (
  */
 type op interface {
 	GetData(result *storage.DataChunk, state opState) error
-	Execute(input *storage.DataChunk, state opState) (storage.DataChunk, error)
+	Execute(input *storage.DataChunk, state opState) (*storage.DataChunk, error)
 	Materialize(input *storage.DataChunk) error
 	IsPipelineBreaker() bool
 	GetOperatorType() PhysicalOperatorType
