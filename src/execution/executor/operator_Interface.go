@@ -6,13 +6,14 @@ import (
 )
 
 type PhysicalOperatorType int
+
 const (
-	PhysicalInvalid   PhysicalOperatorType = iota
-	PhysicalTableScan 
-	PhysicalFilter    
-	PhysicalHashJoin  
-	PhysicalLimit     
-	PhysicalCollector 
+	PhysicalInvalid PhysicalOperatorType = iota
+	PhysicalTableScan
+	PhysicalFilter
+	PhysicalHashJoin
+	PhysicalLimit
+	PhysicalCollector
 )
 
 /** Operator interface : used in pipeline executor
@@ -23,11 +24,12 @@ type op interface {
 	Execute(input *storage.DataChunk, state any) (*storage.DataChunk, error)
 	Materialize(input *storage.DataChunk) error
 
-	InitLocalStateForSource() error
-	InitLocalStateForExecute() error
-	InitLocalStateForMaterialize() error
+	InitLocalStateForSource() (any, error)
+	InitLocalStateForExecute() (any, error)
+	InitLocalStateForMaterialize() (any, error)
 
 	IsPipelineBreaker() bool
+	IsEnd() bool
 	GetOperatorType() PhysicalOperatorType
 }
 
@@ -47,23 +49,26 @@ func (o *Operator) Materialize(input *storage.DataChunk) error {
 	return errors.New("not implemented")
 }
 
-func (o *Operator) InitLocalStateForSource() error {
-	return errors.New("not implemented")
+func (o *Operator) InitLocalStateForSource() (any, error) {
+	return nil, errors.New("not implemented")
 }
 
-func (o *Operator) InitLocalStateForExecute() error {
-	return errors.New("not implemented")
+func (o *Operator) InitLocalStateForExecute() (any, error) {
+	return nil, errors.New("not implemented")
 }
 
-func (o *Operator) InitLocalStateForMaterialize() error {
-	return errors.New("not implemented")
+func (o *Operator) InitLocalStateForMaterialize() (any, error) {
+	return nil, errors.New("not implemented")
 }
 
 func (o *Operator) IsPipelineBreaker() bool {
 	return false
 }
 
+func (o *Operator) IsEnd() bool {
+	return false
+}
+
 func (o *Operator) GetOperatorType() PhysicalOperatorType {
 	return o.Op_type
 }
-

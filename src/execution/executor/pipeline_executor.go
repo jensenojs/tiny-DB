@@ -10,17 +10,44 @@ import (
 type PipelineExecutor struct {
 	executors []op
 	states    []any
-	chunk     []*storage.DataChunk
+	chunks    []*storage.DataChunk
 
 	ispull bool // Need better name
 }
 
-func NewPipelineExecutor(executors []op, states []any, chunk []*storage.DataChunk) *PipelineExecutor {
+func NewPipelineExecutor(executors []op, ispull bool) (*PipelineExecutor, error) {
+	c := make([]*storage.DataChunk, len(executors))
+	s := make([]any, len(executors))
+	var err error
+
+	s[0], err = executors[0].InitLocalStateForSource()
+	if err != nil {
+		return nil, err
+	}
+
+	for i := 1; i < len(executors)-1; i++ {
+		s[i], err = executors[i].InitLocalStateForExecute()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if ispull {
+		s[len(s)-1], err = executors[len(executors)-1].InitLocalStateForExecute()
+	} else {
+		s[len(s)-1], err = executors[len(executors)-1].InitLocalStateForMaterialize()
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &PipelineExecutor{
 		executors: executors,
-		states:    states,
-		chunk:     chunk,
-	}
+		chunks: c,
+		states: s,
+		ispull: ispull,
+	}, nil
 }
 
 func (e *PipelineExecutor) Execute() error {
@@ -39,17 +66,18 @@ func (e *PipelineExecutor) Execute() error {
 
 func (e *PipelineExecutor) executePull() error {
 	// Set data in chunk[0] when pipeline is in source state.
-	e.executors[0].GetData(e.chunk[0], e.states[0])
-	if (e.chunk[0].ChunkNum() == 0) {
+	e.executors[0].GetData(e.chunks[0], e.states[0])
+	if e.chunks[0].ChunkNum() == 0 {
 		return nil
 	}
 
 	// Execute
 	for i := 1; i < len(e.executors); i++ {
-		cp, err := e.executors[i].Execute(e.chunk[i - 1], e.states[i]); if err != nil {
+		cp, err := e.executors[i].Execute(e.chunks[i-1], e.states[i])
+		if err != nil {
 			return err
 		}
-		e.chunk[i] = cp	
+		e.chunks[i] = cp
 
 		if e.executors[i].IsPipelineBreaker() {
 			return nil
@@ -59,24 +87,25 @@ func (e *PipelineExecutor) executePull() error {
 		}
 	}
 
-	e.clean()	
+	e.clean()
 	return nil
 }
 
 func (e *PipelineExecutor) executePush() error {
-	// Set data in chunk[0] when pipeline is in source state.
-	e.executors[0].GetData(e.chunk[0], e.states[0])
-	if (e.chunk[0].ChunkNum() == 0) {
+	// Set data in chunks[0] when pipeline is in source state.
+	e.executors[0].GetData(e.chunks[0], e.states[0])
+	if e.chunks[0].ChunkNum() == 0 {
 		return nil
 	}
 
 	needMaterialize := true
 	// Execute
-	for i := 1; i < len(e.executors) - 1; i++ {
-		cp, err := e.executors[i].Execute(e.chunk[i - 1], e.states[i]); if err != nil {
+	for i := 1; i < len(e.executors)-1; i++ {
+		cp, err := e.executors[i].Execute(e.chunks[i-1], e.states[i])
+		if err != nil {
 			return err
 		}
-		e.chunk[i] = cp	
+		e.chunks[i] = cp
 
 		if e.executors[i].IsPipelineBreaker() {
 			return nil
@@ -91,7 +120,7 @@ func (e *PipelineExecutor) executePush() error {
 
 	// Materialize
 	if needMaterialize {
-		e.executors[len(e.executors) - 1].Materialize(e.chunk[len(e.chunk) - 1])
+		e.executors[len(e.executors)-1].Materialize(e.chunks[len(e.chunks)-1])
 	}
 
 	e.clean()
@@ -100,6 +129,6 @@ func (e *PipelineExecutor) executePush() error {
 
 func (e *PipelineExecutor) clean() {
 	e.executors = nil
-	e.chunk = nil
+	e.chunks = nil
 	e.states = nil
 }
