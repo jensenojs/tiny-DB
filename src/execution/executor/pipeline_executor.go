@@ -9,13 +9,13 @@ import (
  */
 type PipelineExecutor struct {
 	executors []op
-	states    []opState
+	states    []any
 	chunk     []*storage.DataChunk
 
 	ispull bool // Need better name
 }
 
-func NewPipelineExecutor(executors []op, states []opState, chunk []*storage.DataChunk) *PipelineExecutor {
+func NewPipelineExecutor(executors []op, states []any, chunk []*storage.DataChunk) *PipelineExecutor {
 	return &PipelineExecutor{
 		executors: executors,
 		states:    states,
@@ -23,7 +23,7 @@ func NewPipelineExecutor(executors []op, states []opState, chunk []*storage.Data
 	}
 }
 
-func (e *PipelineExecutor) execute() error {
+func (e *PipelineExecutor) Execute() error {
 	var err error
 	if e.ispull {
 		err = e.executePull()
@@ -58,6 +58,7 @@ func (e *PipelineExecutor) executePull() error {
 			return nil
 		}
 	}
+
 	e.clean()	
 	return nil
 }
@@ -69,7 +70,7 @@ func (e *PipelineExecutor) executePush() error {
 		return nil
 	}
 
-	finished := true
+	needMaterialize := true
 	// Execute
 	for i := 1; i < len(e.executors) - 1; i++ {
 		cp, err := e.executors[i].Execute(e.chunk[i - 1], e.states[i]); if err != nil {
@@ -82,15 +83,17 @@ func (e *PipelineExecutor) executePush() error {
 		}
 
 		if cp.ChunkNum() == 0 {
-			finished = false
+			needMaterialize = false
 			return nil
 		}
 
 	}
 
-	if finished {
+	// Materialize
+	if needMaterialize {
 		e.executors[len(e.executors) - 1].Materialize(e.chunk[len(e.chunk) - 1])
 	}
+
 	e.clean()
 	return nil
 }

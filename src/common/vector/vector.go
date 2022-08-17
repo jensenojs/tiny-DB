@@ -3,10 +3,9 @@ package vector
 import "tiny-db/src/common/value"
 
 type VectorType int
-
 const (
-	ConstantVectorType VectorType = 0
-	FlatVectorType     VectorType = 1
+	ConstantVectorType VectorType = iota
+	FlatVectorType      
 )
 
 type Vector struct {

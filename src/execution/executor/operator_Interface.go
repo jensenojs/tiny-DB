@@ -5,70 +5,57 @@ import (
 	"tiny-db/src/storage"
 )
 
-type DummyState struct {}
-
-func NewDummyState() *DummyState {
-	return &DummyState{}
-}
-
-/** Operator state : used in pipeline executor
- *
- */
-type opState interface {
-	InitLocalStateForSource() any
-	InitLocalStateForExecute() any
-	InitLocalStateForMaterialize() any
-}
-
-type OperatorState struct{}
-
-func (s *OperatorState) InitLocalStateForSource() (DummyState, error) {
-	return *NewDummyState(), errors.New("not implemented")
-}
-
-func (s *OperatorState) InitLocalStateForExecute() (DummyState, error) {
-	return *NewDummyState(), errors.New("not implemented")
-}
-
-func (s *OperatorState) InitLocalStateForMaterialize() (DummyState, error) {
-	return *NewDummyState(), errors.New("not implemented")
-}
-
 type PhysicalOperatorType int
-
 const (
-	PhysicalInvalid   PhysicalOperatorType = 0
-	PhysicalTableScan PhysicalOperatorType = 1
-	PhysicalFilter    PhysicalOperatorType = 2
-	PhysicalHashJoin  PhysicalOperatorType = 3
-	PhysicalLimit     PhysicalOperatorType = 4
-	PhysicalCollector PhysicalOperatorType = 5
+	PhysicalInvalid   PhysicalOperatorType = iota
+	PhysicalTableScan 
+	PhysicalFilter    
+	PhysicalHashJoin  
+	PhysicalLimit     
+	PhysicalCollector 
 )
 
 /** Operator interface : used in pipeline executor
  *
  */
 type op interface {
-	GetData(result *storage.DataChunk, state opState) error
-	Execute(input *storage.DataChunk, state opState) (*storage.DataChunk, error)
+	GetData(result *storage.DataChunk, state any) error
+	Execute(input *storage.DataChunk, state any) (*storage.DataChunk, error)
 	Materialize(input *storage.DataChunk) error
+
+	InitLocalStateForSource() error
+	InitLocalStateForExecute() error
+	InitLocalStateForMaterialize() error
+
 	IsPipelineBreaker() bool
 	GetOperatorType() PhysicalOperatorType
 }
 
 type Operator struct {
-	op_type PhysicalOperatorType
+	Op_type PhysicalOperatorType
 }
 
-func (o *Operator) GetData(result *storage.DataChunk, state opState) error {
+func (o *Operator) GetData(result *storage.DataChunk, state any) error {
 	return errors.New("not implemented")
 }
 
-func (o *Operator) Execute(input *storage.DataChunk, state opState) (*storage.DataChunk, error) {
+func (o *Operator) Execute(input *storage.DataChunk, state any) (*storage.DataChunk, error) {
 	return nil, errors.New("not implemented")
 }
 
 func (o *Operator) Materialize(input *storage.DataChunk) error {
+	return errors.New("not implemented")
+}
+
+func (o *Operator) InitLocalStateForSource() error {
+	return errors.New("not implemented")
+}
+
+func (o *Operator) InitLocalStateForExecute() error {
+	return errors.New("not implemented")
+}
+
+func (o *Operator) InitLocalStateForMaterialize() error {
 	return errors.New("not implemented")
 }
 
@@ -77,5 +64,6 @@ func (o *Operator) IsPipelineBreaker() bool {
 }
 
 func (o *Operator) GetOperatorType() PhysicalOperatorType {
-	return o.op_type
+	return o.Op_type
 }
+
