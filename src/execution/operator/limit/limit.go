@@ -4,7 +4,6 @@ import (
 	"tiny-db/src/common/vector"
 	"tiny-db/src/execution/executor"
 	"tiny-db/src/storage"
-
 )
 
 type limitState struct {
@@ -17,13 +16,15 @@ type Limit struct {
 
 	offset int
 	limit  int
+	child  executor.Operator
 }
 
-func NewLimit(offset, limit int) *Limit {
+func NewLimit(offset, limit int, child executor.Operator) *Limit {
 	var pl = new(Limit)
 	pl.Op_type = executor.PhysicalLimit
 	pl.offset = offset
 	pl.limit = limit
+	pl.child = child
 	return pl
 }
 
@@ -39,26 +40,32 @@ func (l *Limit) Execute(input *storage.DataChunk, state any) (*storage.DataChunk
 		return storage.NewDataChunk(make([]*vector.Vector, 0)), nil
 	}
 
-	cur_offset := ops.cursor
+	curOffset := ops.cursor
+	output := storage.NewDataChunk(make([]*vector.Vector, 0))
+	start := 0
+	count := input.ChunkNum()
 
-	// hard code for test now.
-	chunk := storage.NewDataChunk(make([]*vector.Vector, 0))
-
-	
-
-	if cur_offset < l.offset {
-		if input.ChunkNum()+cur_offset < l.offset {
+	if curOffset < l.offset {
+		if input.ChunkNum()+curOffset < l.offset {
 			ops.cursor += input.ChunkNum()
-			return chunk, nil
+			return output, nil
 		} else {
-			// leftToStart := l.offset - cur_offset
-			// dataCount := Min(input.ChunkNum() - leftToStart, l.limit)
-			
+			start = l.offset - curOffset
+			count = Min(input.ChunkNum() - start, l.limit)
 		}
 	} else {
-
+		if curOffset + input.ChunkNum() >= l.limit {
+			count = l.limit - curOffset
+		} 
 	}
-	return nil, nil
+
+	output, _ = storage.NewDataChunkWithSpecificType(input)
+	for i := 0; i < input.ColumnCount(); i++ {
+		from := input.GetVector(i)
+		to := output.GetVector(i)
+		to.Dup(from, start, count)
+	}
+	return output, nil
 }
 
 func Min(i1, i2 int) int {

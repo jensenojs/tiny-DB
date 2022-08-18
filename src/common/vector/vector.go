@@ -1,11 +1,15 @@
 package vector
 
-import "tiny-db/src/common/value"
+import (
+	"errors"
+	"tiny-db/src/common/value"
+)
 
 type VectorType int
+
 const (
 	ConstantVectorType VectorType = iota
-	FlatVectorType      
+	FlatVectorType
 )
 
 type Vector struct {
@@ -78,4 +82,56 @@ func (v *Vector) GetRawColumn() any {
 func (v *Vector) Reference(other *Vector) {
 	v.data = other.data
 	v.size = other.size
+}
+
+func (v *Vector) GetValue(idx int) (any, error) {
+	if idx < 0 || idx > v.size {
+		return nil, errors.New("invalid range")
+	}
+	switch v.phy_type {
+	case value.PhysicalString:
+		val := v.data.([]string)
+		return val[idx], nil
+	case value.PhysicalInt32:
+		val := v.data.([]int32)
+		return val[idx], nil
+	default:
+		return nil, errors.New("unsupported value type")
+	}
+}
+
+func (v *Vector) GetValuesByRange(start, count int) (any, error) {
+	if start < 0 || start+count > v.size {
+		return nil, errors.New("invalid range")
+	}
+	switch v.phy_type {
+	case value.PhysicalString:
+		val := v.data.([]string)
+		return val[start : start+count], nil
+	case value.PhysicalInt32:
+		val := v.data.([]int32)
+		return val[start : start+count], nil
+	default:
+		return nil, errors.New("unsupported value type")
+	}
+}
+
+func (v *Vector) Dup(s *Vector, start, count int) error {
+	if start < 0 || start+count > s.size {
+		return errors.New("invalid range")
+	}
+
+	if v.phy_type != s.phy_type {
+		return errors.New("dup vector with different type")
+	}
+
+	switch v.phy_type {
+	case value.PhysicalString:
+		v.data = append(v.data.([]string), s.data.([]string)[start:start+count]...)
+	case value.PhysicalInt32:
+		v.data = append(v.data.([]int32), s.data.([]int32)[start:start+count]...)
+	default:
+		return errors.New("unsupported value type")
+	}
+	return nil
 }

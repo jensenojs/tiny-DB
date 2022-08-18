@@ -3,8 +3,8 @@ package value
 type PhysicalType int
 
 const (
-	PhysicalInt32  PhysicalType = 0
-	PhysicalString PhysicalType = 1
+	PhysicalInt32  PhysicalType = iota
+	PhysicalString
 )
 
 type Value interface {

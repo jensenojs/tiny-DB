@@ -16,26 +16,26 @@ type PipelineExecutor struct {
 }
 
 func NewPipelineExecutor(executors []op, ispull bool) (*PipelineExecutor, error) {
-	c := make([]*storage.DataChunk, len(executors))
-	s := make([]any, len(executors))
+	chunks := make([]*storage.DataChunk, len(executors))
+	states := make([]any, len(executors))
 	var err error
 
-	s[0], err = executors[0].InitLocalStateForSource()
+	states[0], err = executors[0].InitLocalStateForSource()
 	if err != nil {
 		return nil, err
 	}
 
 	for i := 1; i < len(executors)-1; i++ {
-		s[i], err = executors[i].InitLocalStateForExecute()
+		states[i], err = executors[i].InitLocalStateForExecute()
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if ispull {
-		s[len(s)-1], err = executors[len(executors)-1].InitLocalStateForExecute()
+		states[len(states)-1], err = executors[len(executors)-1].InitLocalStateForExecute()
 	} else {
-		s[len(s)-1], err = executors[len(executors)-1].InitLocalStateForMaterialize()
+		states[len(states)-1], err = executors[len(executors)-1].InitLocalStateForMaterialize()
 	}
 
 	if err != nil {
@@ -44,8 +44,8 @@ func NewPipelineExecutor(executors []op, ispull bool) (*PipelineExecutor, error)
 
 	return &PipelineExecutor{
 		executors: executors,
-		chunks: c,
-		states: s,
+		chunks: chunks,
+		states: states,
 		ispull: ispull,
 	}, nil
 }
