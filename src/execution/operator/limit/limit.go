@@ -13,8 +13,7 @@ type limitState struct {
 type Limit struct {
 	executor.Operator
 	ops limitState
-
-	offset int
+offset int
 	limit  int
 	child  executor.Operator
 }
