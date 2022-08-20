@@ -20,7 +20,7 @@ const (
 func NewVector(phyType value.PhysicalType) *Vector {
 	switch phyType {
 	case value.INT32:
-		buffer := NewFlatBuffer(COMMON_VECTOR_SIZE)
+		buffer := NewFlatBuffer(4 * COMMON_VECTOR_SIZE)
 		col := types.DecodeToInt32(buffer.Data)
 		return &Vector{
 			Column:     col,
