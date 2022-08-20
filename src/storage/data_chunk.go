@@ -11,8 +11,8 @@ import (
 type DataChunk struct {
 	Cols     []*vector.Vector
 	cache    []*vector.VectorCache
-	count    uint64
-	capacity uint64
+	count    int
+	capacity int
 }
 
 func NewDataChunk(types []types.PhysicalType) *DataChunk {
@@ -35,14 +35,14 @@ func (c *DataChunk) Reset() {
 	}
 }
 
-func (c *DataChunk) Count() uint64 {
+func (c *DataChunk) Count() int {
 	return c.count
 }
 
-func (c *DataChunk) SetCount(count uint64) {
+func (c *DataChunk) SetCount(count int) {
 	c.count = count
 }
 
-func (c *DataChunk) ColumnCount() uint64 {
-	return uint64(len(c.Cols))
+func (c *DataChunk) ColumnCount() int {
+	return len(c.Cols)
 }

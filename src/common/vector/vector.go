@@ -8,7 +8,7 @@ import (
 type VectorType int
 
 // Vector Size
-const COMMON_VECTOR_SIZE uint64 = 1024
+const COMMON_VECTOR_SIZE int = 1024
 
 const (
 	CONSTANT_VECTOR VectorType = iota
@@ -47,7 +47,7 @@ func GetColumn[T any](v *Vector) []T {
 	return v.Column.([]T)
 }
 
-func (v *Vector) GetValue(idx uint64) value.Value {
+func (v *Vector) GetValue(idx int) value.Value {
 	index := idx
 	valueVec := v
 	search := true
@@ -102,7 +102,7 @@ func (v *Vector) StructChilds() []*Vector {
 }
 
 //! Creates a reference to a slice of the other vector
-func (v *Vector) Slice(sel *SelectionVector, count uint64) {
+func (v *Vector) Slice(sel *SelectionVector, count int) {
 	switch v.Type {
 	case CONSTANT_VECTOR:
 		// do nothing

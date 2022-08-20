@@ -1,6 +1,6 @@
 package vector
 
-type sel_t uint32
+type sel_t int
 
 // use dictionary
 type SelectionVector struct {
@@ -11,25 +11,24 @@ func NewSelVector() *SelectionVector {
 	return &SelectionVector{}
 }
 
-func (s *SelectionVector) GetIndex(idx uint64) uint64 {
+func (s *SelectionVector) GetIndex(idx int) int {
 	if s.sels == nil {
 		return idx
 	}
-	return uint64(s.sels[idx])
+	return int(s.sels[idx])
 }
 
-func (s *SelectionVector) SetIndex(idx, newIdx uint64) {
+func (s *SelectionVector) SetIndex(idx, newIdx int) {
 	if s.sels == nil {
 		s.intialize(COMMON_VECTOR_SIZE)
 	}
 	s.sels[idx] = sel_t(newIdx)
 }
 
-func (s *SelectionVector) Slice(other *SelectionVector, count uint64) *SelectionVector {
-	var i uint64 = 0
+func (s *SelectionVector) Slice(other *SelectionVector, count int) *SelectionVector {
 	newSel := NewSelVector()
 	newSel.intialize(count) // right?
-	for ; i < count; i++ {
+	for i := 0; i < count; i++ {
 		newIdx := other.GetIndex(i)
 		idx := s.GetIndex(newIdx)
 		newSel.SetIndex(i, idx)
@@ -37,6 +36,6 @@ func (s *SelectionVector) Slice(other *SelectionVector, count uint64) *Selection
 	return newSel
 }
 
-func (s *SelectionVector) intialize(count uint64) {
+func (s *SelectionVector) intialize(count int) {
 	s.sels = make([]sel_t, count)
 }

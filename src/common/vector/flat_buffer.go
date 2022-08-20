@@ -1,6 +1,6 @@
 package vector
 
-func NewFlatBuffer(size uint64) *FlatVectorBuffer {
+func NewFlatBuffer(size int) *FlatVectorBuffer {
 	return &FlatVectorBuffer{
 		Data: make([]byte, size),
 	}

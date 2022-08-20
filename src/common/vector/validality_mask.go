@@ -21,42 +21,42 @@ func NewValidalityMask() *ValidalityMask {
 	return &ValidalityMask{}
 }
 
-func EntryCount(count uint64) uint64 {
-	return (count + uint64(bitPerValue-1)) / uint64(bitPerValue)
+func EntryCount(count int) int {
+	return (count + bitPerValue - 1) / bitPerValue
 }
 
 func (v *ValidalityMask) AllValid() bool {
 	return v.validalityMask == nil
 }
 
-func GetEntryIndex(idx uint64) (uint64, uint64) {
-	entryIdx := idx / uint64(bitPerValue)
-	inIdx := idx % uint64(bitPerValue)
+func GetEntryIndex(idx int) (int, int) {
+	entryIdx := idx / bitPerValue
+	inIdx := idx % bitPerValue
 	return entryIdx, inIdx
 }
 
-func RowIsValid(mask validality_t, inIdx uint64) bool {
+func RowIsValid(mask validality_t, inIdx int) bool {
 	return (mask & (validality_t(1) << validality_t(inIdx))) != 0
 }
 
-func RowIsInValid(mask validality_t, inIdx uint64) bool {
+func RowIsInValid(mask validality_t, inIdx int) bool {
 	return (mask & (validality_t(1) << validality_t(inIdx))) == 0
 }
 
-func (v *ValidalityMask) GetValidalityEntry(entry_idx uint64) validality_t {
+func (v *ValidalityMask) GetValidalityEntry(entry_idx int) validality_t {
 	if v.validalityMask == nil {
 		return validality_t(maxEntry)
 	}
 	return v.validalityMask[entry_idx]
 }
 
-func (v *ValidalityMask) RowIsValidLike(idx uint64) bool {
+func (v *ValidalityMask) RowIsValidLike(idx int) bool {
 	entryIdx, inIdx := GetEntryIndex(idx)
 	mask := v.GetValidalityEntry(entryIdx)
 	return RowIsValid(mask, inIdx)
 }
 
-func (v *ValidalityMask) RowIsValid(idx uint64) bool {
+func (v *ValidalityMask) RowIsValid(idx int) bool {
 	// fast path, nil means all values are valid
 	if v.validalityMask == nil {
 		return true
@@ -64,13 +64,13 @@ func (v *ValidalityMask) RowIsValid(idx uint64) bool {
 	return v.RowIsValidLike(idx)
 }
 
-func (v *ValidalityMask) RowIsInValidLike(idx uint64) bool {
+func (v *ValidalityMask) RowIsInValidLike(idx int) bool {
 	entryIdx, inIdx := GetEntryIndex(idx)
 	mask := v.GetValidalityEntry(entryIdx)
 	return RowIsInValid(mask, inIdx)
 }
 
-func (v *ValidalityMask) RowIsInValid(idx uint64) bool {
+func (v *ValidalityMask) RowIsInValid(idx int) bool {
 	// fast path
 	if v.validalityMask == nil {
 		return false
@@ -78,7 +78,7 @@ func (v *ValidalityMask) RowIsInValid(idx uint64) bool {
 	return v.RowIsInValidLike(idx)
 }
 
-func (v *ValidalityMask) SetRowValid(idx uint64) {
+func (v *ValidalityMask) SetRowValid(idx int) {
 	// fast path
 	if v.validalityMask == nil {
 		return
@@ -87,7 +87,7 @@ func (v *ValidalityMask) SetRowValid(idx uint64) {
 	v.validalityMask[entryIdx] |= (validality_t(1) << validality_t(inIdx))
 }
 
-func (v *ValidalityMask) SetRowInValid(idx uint64) {
+func (v *ValidalityMask) SetRowInValid(idx int) {
 	if v.validalityMask == nil {
 		v.initialize(COMMON_VECTOR_SIZE)
 	}
@@ -99,6 +99,6 @@ func (v *ValidalityMask) GetData() []validality_t {
 	return v.validalityMask
 }
 
-func (v *ValidalityMask) initialize(count uint64) {
+func (v *ValidalityMask) initialize(count int) {
 	v.validalityMask = make([]validality_t, EntryCount(count))
 }
