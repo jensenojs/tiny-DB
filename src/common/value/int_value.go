@@ -18,5 +18,5 @@ func (v *IntValue) ToString() string {
 }
 
 func (v *IntValue) GetType() PhysicalType {
-	return PhysicalInt32
+	return INT32
 }

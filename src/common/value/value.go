@@ -2,9 +2,10 @@ package value
 
 type PhysicalType int
 
+// TODO(lokax): Move to package types
 const (
-	PhysicalInt32  PhysicalType = iota
-	PhysicalString
+	INT32 PhysicalType = iota
+	STRING
 )
 
 type Value interface {

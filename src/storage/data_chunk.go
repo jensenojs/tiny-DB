@@ -31,12 +31,12 @@ func NewDataChunkWithSpecificType(template *DataChunk) (*DataChunk, error) {
 	var vec *vector.Vector
 	for i := 0; i < template.ColumnCount(); i++ {
 		switch template.GetVector(i).GetType() {
-			case value.PhysicalInt32:
-				vec = vector.NewVectorInt32(make([]int32, 0))
-			case value.PhysicalString:
-				vec = vector.NewVectorString(make([]string, 0))
-			default:
-				return nil, errors.New("unsupported value type")
+		case value.INT32:
+			vec = vector.NewVectorInt32(make([]int32, 0))
+		case value.STRING:
+			vec = vector.NewVectorString(make([]string, 0))
+		default:
+			return nil, errors.New("unsupported value type")
 		}
 		chunk.PushColumn(vec)
 	}

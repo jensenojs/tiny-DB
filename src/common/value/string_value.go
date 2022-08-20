@@ -18,5 +18,5 @@ func (v *StringValue) ToString() string {
 }
 
 func (v *StringValue) GetType() PhysicalType {
-	return PhysicalString
+	return STRING
 }

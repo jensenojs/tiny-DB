@@ -1,58 +1,176 @@
 package vector
 
 import (
-	"errors"
+	"tiny-db/src/common/types"
 	"tiny-db/src/common/value"
 )
 
 type VectorType int
 
+// Vector Size
+const COMMON_VECTOR_SIZE uint64 = 1024
+
 const (
-	ConstantVectorType VectorType = iota
-	FlatVectorType
+	CONSTANT_VECTOR VectorType = iota
+	FLAT_VECTOR
+	DICTIONARY_VECTOR
 )
 
-type Vector struct {
-	data        interface{}
-	size        int
-	phy_type    value.PhysicalType
-	vector_type VectorType
+//! Create a vector, it's size is 1024
+func NewVector(phyType value.PhysicalType) *Vector {
+	switch phyType {
+	case value.INT32:
+		buffer := NewFlatBuffer(COMMON_VECTOR_SIZE)
+		col := types.DecodeToInt32(buffer.Data)
+		return &Vector{
+			Column:     col,
+			buffer:     buffer,
+			extra:      nil,
+			Validality: NewValidalityMask(),
+			phyType:    phyType,
+			Type:       FLAT_VECTOR,
+		}
+
+	case value.STRING:
+		// TODO(lokax):
+	}
+	panic("Unsupport now!")
 }
 
+func GetColumn[T any](v *Vector) []T {
+	return v.Column.([]T)
+}
+
+func (v *Vector) GetValue(idx uint64) value.Value {
+	index := idx
+	valueVec := v
+	search := true
+	for search {
+		switch v.Type {
+		case CONSTANT_VECTOR:
+			index = 0
+			search = false
+		case FLAT_VECTOR:
+			search = false
+		case DICTIONARY_VECTOR:
+			valueVec = v.GetChild() // safe
+			index = v.GetSelVec().GetIndex(index)
+		}
+	}
+	switch v.phyType {
+	case value.INT32:
+		rawVec := GetColumn[int32](valueVec)
+		mask := v.Validality
+		if !mask.RowIsValid(idx) {
+			return value.NewNullValue(value.INT32)
+		}
+		return value.NewInt(rawVec[index])
+	case value.STRING:
+		panic("TOOD(lokax): ")
+	default:
+		panic("Unsupport type")
+	}
+}
+
+func (v *Vector) GetSelVec() *SelectionVector {
+	if v.Type != DICTIONARY_VECTOR {
+		panic("must be dictionary vector")
+	}
+	return v.buffer.(*DictVectorBuffer).GetSelVec()
+}
+
+func (v *Vector) GetChild() *Vector {
+	if v.Type != DICTIONARY_VECTOR {
+		panic("must be dictionary vector")
+	}
+	return v.extra.(*ChildVectorBuffer).ChildVec
+}
+
+//! Creates a reference to a slice of the other vector
+func (v *Vector) Slice(sel *SelectionVector, count uint64) {
+	switch v.Type {
+	case CONSTANT_VECTOR:
+		// do nothing
+		return
+	case FLAT_VECTOR:
+		newVec := v.ShallowCopy()
+		childBuffer := NewChildBuffer(newVec)
+		dictBuffer := NewDictBuffer(sel)
+		v.Type = DICTIONARY_VECTOR
+		v.buffer = dictBuffer
+		v.extra = childBuffer
+	case DICTIONARY_VECTOR:
+		bf := v.buffer.(*DictVectorBuffer)
+		vsel := bf.GetSelVec()
+		// Merge selection vector
+		newSel := vsel.Slice(sel, count)
+		dictBf := NewDictBuffer(newSel)
+		childVec := v.ShallowCopy()
+		v.buffer = dictBf
+		v.extra = NewChildBuffer(childVec)
+	default:
+		panic("Unsupport vector type!")
+	}
+}
+
+func (v *Vector) Reference(other *Vector) {
+	if v.phyType != other.phyType {
+		panic("Type incorrect!")
+	}
+	v.Type = other.Type
+	v.buffer = other.buffer
+	v.extra = other.extra
+	v.Validality = other.Validality
+	v.Column = other.Column
+}
+
+func (v *Vector) ShallowCopy() *Vector {
+	newVec := &Vector{
+		phyType: v.phyType,
+	}
+	newVec.Reference(v)
+	return newVec
+}
+
+/*
 func newFlatVector(column any, size int, data_type value.PhysicalType) *Vector {
 	return &Vector{
+		buffer:      nil,
 		data:        column,
 		size:        size,
 		phy_type:    data_type,
-		vector_type: FlatVectorType,
+		vector_type: FLAT_VECTOR,
+		validality:  NewValidalityMask(),
 	}
 }
 
 func NewVectorInt32(column []int32) *Vector {
-	return newFlatVector(column, len(column), value.PhysicalInt32)
+	return newFlatVector(column, len(column), value.INT32)
 }
 
 func NewVectorString(column []string) *Vector {
-	return newFlatVector(column, len(column), value.PhysicalString)
+	return newFlatVector(column, len(column), value.STRING)
 }
+*/
 
+/*
 func NewConstantVector(v value.Value, size int) *Vector {
 	value_type := v.GetType()
-	if value_type == value.PhysicalInt32 {
+	if value_type == value.INT32 {
 		int_value := v.(*value.IntValue)
 		return &Vector{
 			data:        []int32{int32(*int_value)},
 			size:        size,
 			phy_type:    value_type,
-			vector_type: ConstantVectorType,
+			vector_type: CONSTANT_VECTOR,
 		}
-	} else if value_type == value.PhysicalString {
+	} else if value_type == value.STRING {
 		string_value := v.(*value.StringValue)
 		return &Vector{
 			data:        []string{string(*string_value)},
 			size:        size,
 			phy_type:    value_type,
-			vector_type: ConstantVectorType,
+			vector_type: CONSTANT_VECTOR,
 		}
 	} else {
 		panic("Unsupport type!")
@@ -68,7 +186,7 @@ func (v *Vector) GetVectorType() VectorType {
 }
 
 func (v *Vector) IsConatantVector() bool {
-	return v.GetVectorType() == ConstantVectorType
+	return v.GetVectorType() == CONSTANT_VECTOR
 }
 
 func (v *Vector) Size() int {
@@ -84,15 +202,17 @@ func (v *Vector) Reference(other *Vector) {
 	v.size = other.size
 }
 
+// TODO(lokax): Check vector type, make this function more safe
+// if vector type is constant vector, we just return v.data([]int32)[0] instead of ...[idx]
 func (v *Vector) GetValue(idx int) (any, error) {
 	if idx < 0 || idx > v.size {
 		return nil, errors.New("invalid range")
 	}
 	switch v.phy_type {
-	case value.PhysicalString:
+	case value.STRING:
 		val := v.data.([]string)
 		return val[idx], nil
-	case value.PhysicalInt32:
+	case value.INT32:
 		val := v.data.([]int32)
 		return val[idx], nil
 	default:
@@ -105,10 +225,10 @@ func (v *Vector) GetValuesByRange(start, count int) (any, error) {
 		return nil, errors.New("invalid range")
 	}
 	switch v.phy_type {
-	case value.PhysicalString:
+	case value.STRING:
 		val := v.data.([]string)
 		return val[start : start+count], nil
-	case value.PhysicalInt32:
+	case value.INT32:
 		val := v.data.([]int32)
 		return val[start : start+count], nil
 	default:
@@ -126,12 +246,13 @@ func (v *Vector) Dup(s *Vector, start, count int) error {
 	}
 
 	switch v.phy_type {
-	case value.PhysicalString:
+	case value.STRING:
 		v.data = append(v.data.([]string), s.data.([]string)[start:start+count]...)
-	case value.PhysicalInt32:
+	case value.INT32:
 		v.data = append(v.data.([]int32), s.data.([]int32)[start:start+count]...)
 	default:
 		return errors.New("unsupported value type")
 	}
 	return nil
 }
+*/
