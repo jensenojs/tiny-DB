@@ -117,7 +117,7 @@ func (v *Vector) SliceOther(rhs *Vector, sel *SelectionVector, count int) {
 	resultCount := 0
 	sel := NewSelVec()
 	for i := 0; i < count; i++ {
-		if x[i] <= 3 {
+		if input[i] <= 3 {
 			sel.setIdx(resultCount++, i);
 		}
 	}
@@ -177,6 +177,10 @@ func (v *Vector) ShallowCopy() *Vector {
 	}
 	newVec.Reference(v)
 	return newVec
+}
+
+func (v *Vector) GetPhyType() types.PhysicalType {
+	return v.phyType
 }
 
 /*

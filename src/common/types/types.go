@@ -6,6 +6,7 @@ const (
 	INT32 PhysicalType = iota
 	STRING
 	STRUCT // Need More Info
+	BOOL
 )
 
 type StringVec struct {
