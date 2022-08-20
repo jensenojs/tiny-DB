@@ -20,10 +20,10 @@ func (e *ExpressionExecutor) AddChunk(c *storage.DataChunk) {
 	e.inputChunk = c
 }
 
-func (e *ExpressionExecutor) Execute(expr expression.Expression) {
+func (e *ExpressionExecutor) Execute(expr expression.Expression, result *vector.Vector) {
 	switch expr.Type() {
 	case expression.BOUND_INPUT:
-		e.ExecuteInputRef(expr.(*expression.BoundInputRef))
+		e.ExecuteInputRef(expr.(*expression.BoundInputRef), result)
 	default:
 		panic("Unsupport!")
 	}
