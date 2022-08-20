@@ -24,6 +24,8 @@ func (e *ExpressionExecutor) Execute(expr expression.Expression, result *vector.
 	switch expr.Type() {
 	case expression.BOUND_INPUT:
 		e.ExecuteInputRef(expr.(*expression.BoundInputRef), result)
+	case expression.BOUND_BINARY:
+		e.ExecuteBinary()
 	default:
 		panic("Unsupport!")
 	}
@@ -31,4 +33,8 @@ func (e *ExpressionExecutor) Execute(expr expression.Expression, result *vector.
 
 func (e *ExpressionExecutor) ExecuteInputRef(expr *expression.BoundInputRef, result *vector.Vector) {
 	result.Reference(e.inputChunk.Cols[expr.RefIdx])
+}
+
+func (e *ExpressionExecutor) ExecuteBinary(expr *expression.BoundBinaryOp, result *vector.Vector) {
+
 }

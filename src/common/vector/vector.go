@@ -106,6 +106,31 @@ func (v *Vector) SliceOther(rhs *Vector, sel *SelectionVector, count int) {
 	v.Slice(sel, count)
 }
 
+/*
+	input: (x)[3, 5, 10, 3, 1]
+	expr: x <= 3
+	output: (x)[3, 3, 1]
+
+	// code
+	resultCount := 0
+	sel := NewSelVec()
+	for i := 0; i < count; i++ {
+		if x[i] <= 3 {
+			sel.setIdx(resultCount++, i);
+		}
+	}
+
+	output.SliceOther(input, sel, resultCount)
+	output.SetCount(resultCount);
+	// GetData
+	sel := output.GetSelVec()
+	for i := 0; i < output.Count(); i++ {
+		realIdx := sel.getIdx(i)
+		output.GetValue(realIdx) or output.GetColumn[int32]()[realIdx]
+	}
+
+*/
+
 //! Creates a reference to a slice of the other vector
 func (v *Vector) Slice(sel *SelectionVector, count int) {
 	switch v.Type {
