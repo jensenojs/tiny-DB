@@ -12,8 +12,8 @@ type limitState struct {
 
 type Limit struct {
 	executor.Operator
-	ops limitState
-offset int
+
+	offset int
 	limit  int
 	child  executor.Operator
 }
@@ -27,43 +27,50 @@ func NewLimit(offset, limit int, child executor.Operator) *Limit {
 	return pl
 }
 
-func (l *Limit) InitLocalStateForExecute() error {
-	l.ops.cursor = 0
-	return nil
+func (l *Limit) InitLocalStateForExecute() (any, error) {
+	s := &limitState{cursor : 0}
+	return s, nil
+}
+
+func (l *Limit) InitLocalStateForMaterialize() (any, error) {
+	s := &limitState{cursor : 0}
+	return s, nil
 }
 
 func (l *Limit) Execute(input, output *storage.DataChunk, state any) error {
 	ops := state.(limitState)
 	maxCount := l.limit + l.offset
 	if ops.cursor >= maxCount {
-		
+		output.Reset()
+		return nil
 	}
 
 	curOffset := ops.cursor
 	start := 0
-	count := input.ChunkNum()
+	count := input.Count()
 
 	if curOffset < l.offset {
-		if input.ChunkNum()+curOffset < l.offset {
-			ops.cursor += input.ChunkNum()
-			return output, nil
+		if input.Count()+curOffset < l.offset {
+			ops.cursor += input.Count()
+			output.Reset()
+			return nil
 		} else {
 			start = l.offset - curOffset
-			count = Min(input.ChunkNum() - start, l.limit)
+			count = Min(input.Count()-start, l.limit)
 		}
 	} else {
-		if curOffset + input.ChunkNum() >= l.limit {
+		if curOffset+input.Count() >= l.limit {
 			count = l.limit - curOffset
-		} 
+		}
 	}
 
-	output, _ = storage.NewDataChunkWithSpecificType(input)
-	for i := 0; i < input.ColumnCount(); i++ {
-		from := input.GetVector(i)
-		to := output.GetVector(i)
-		to.Dup(from, start, count)
+	sels := vector.NewSelVector()
+	for i := 0; i < count; i++ {
+		sels.SetIndex(i, start+i)
 	}
-	return output, nil
+	output.Slice(input, sels, count)
+
+	return nil
 }
 
 func Min(i1, i2 int) int {
@@ -74,7 +81,7 @@ func Min(i1, i2 int) int {
 	}
 }
 
-func (l *Limit) IsEnd() bool {
-	s := l.ops
+func (l *Limit) IsEnd(state any) bool {
+	s := state.(limitState)
 	return s.cursor >= l.offset+l.limit
 }

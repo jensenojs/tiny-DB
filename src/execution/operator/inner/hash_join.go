@@ -8,34 +8,35 @@ import (
 
 type innerHashState struct {
 	l     sync.Mutex
-	m     map[any]any
-	kType types.PhysicalType
-	vType types.PhysicalType
+	m     map[int][]int
 }
 
 type InnerHash struct {
-	operator executor.Operator
-	ops      innerHashState
+	executor.Operator
 
+	kType types.PhysicalType
+	vType types.PhysicalType
 	lchild executor.Operator
 	rchild executor.Operator
 }
 
 func NewInnerJoin(kType, vType types.PhysicalType, lchild, rchild executor.Operator) *InnerHash {
 	var pi = new(InnerHash)
-	pi.operator.Op_type = executor.PhysicalHashJoin
+	pi.Op_type = executor.PhysicalHashJoin
+	pi.kType = kType
+	pi.vType = vType
 	pi.lchild = lchild
 	pi.rchild = rchild
-	pi.ops.kType = kType
-	pi.ops.vType = vType
 	return pi
 }
 
 func (i *InnerHash) InitLocalStateForMaterialize() (any, error) {
-	i.ops.l = sync.Mutex{}
-	
+	s :=  &innerHashState{
 
-	return i.ops, nil
+		// TODO(Jensen): Hard code for now, Need Customized hash map 
+		m : make(map[int][]int),
+	}	
+	return s, nil
 }
 
 func (i *InnerHash) IsPipelineBreaker() bool {

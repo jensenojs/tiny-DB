@@ -62,16 +62,14 @@ func (e *PipelineExecutor) executePull() error {
 
 	// Execute
 	for i := 1; i < len(e.executors); i++ {
-		cp, err := e.executors[i].Execute(e.chunks[i-1], e.states[i])
+		err := e.executors[i].Execute(e.chunks[i-1], e.chunks[i], e.states[i])
 		if err != nil {
 			return err
 		}
-		e.chunks[i] = cp
-
 		if e.executors[i].IsPipelineBreaker() {
 			return nil
 		}
-		if cp.Count() == 0 {
+		if e.chunks[i].Count() == 0 {
 			return nil
 		}
 	}
@@ -90,17 +88,16 @@ func (e *PipelineExecutor) executePush() error {
 	needMaterialize := true
 	// Execute
 	for i := 1; i < len(e.executors)-1; i++ {
-		cp, err := e.executors[i].Execute(e.chunks[i-1], e.states[i])
+		err := e.executors[i].Execute(e.chunks[i-1], e.chunks[i], e.states[i])
 		if err != nil {
 			return err
 		}
-		e.chunks[i] = cp
 
 		if e.executors[i].IsPipelineBreaker() {
 			return nil
 		}
 
-		if cp.Count() == 0 {
+		if e.chunks[i].Count() == 0 {
 			needMaterialize = false
 			return nil
 		}
