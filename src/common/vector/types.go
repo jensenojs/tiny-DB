@@ -10,6 +10,8 @@ const (
 	DICTIONARY_VECTO_BUFFER
 	//! Hold a child vector
 	CHILD_VECTOR_BUFFER
+	//! Cache buffer for reset DataChunk
+	CACHE_VECTOR_BUFFER
 )
 
 type VectorBuffer interface {
@@ -36,6 +38,16 @@ type Vector struct {
 	Validality *ValidalityMask
 	phyType    value.PhysicalType
 	Type       VectorType
+}
+
+type VectorCache struct {
+	buffer  VectorBuffer
+	phyType value.PhysicalType
+}
+
+type CacheBuffer struct {
+	Data    []byte
+	phyType value.PhysicalType
 }
 
 /*

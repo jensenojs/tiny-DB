@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"errors"
 	"tiny-db/src/common/value"
 	"tiny-db/src/common/vector"
 )
@@ -10,21 +9,45 @@ import (
  *
  */
 type DataChunk struct {
-	cols     []*vector.Vector
-	row_size int
+	Cols     []*vector.Vector
+	cache    []*vector.VectorCache
+	count    uint64
+	capacity uint64
 }
 
-func NewDataChunk(cols []*vector.Vector) *DataChunk {
-	row_size := 0
-	if len(cols) != 0 {
-		row_size = cols[0].Size()
+func NewDataChunk(types []value.PhysicalType) *DataChunk {
+	chunk := &DataChunk{
+		Cols:     make([]*vector.Vector, len(types)),
+		cache:    make([]*vector.VectorCache, len(types)),
+		count:    0,
+		capacity: vector.COMMON_VECTOR_SIZE,
 	}
-	return &DataChunk{
-		cols:     cols,
-		row_size: row_size,
+	for i := 0; i < len(types); i++ {
+		chunk.cache[i] = vector.NewVectorCache(types[i])
+		chunk.Cols[i] = vector.NewFromCache(chunk.cache[i])
+	}
+	return chunk
+}
+
+func (c *DataChunk) Reset() {
+	for i := 0; i < len(c.Cols); i++ {
+		c.cache[i].ResetVector(c.Cols[i])
 	}
 }
 
+func (c *DataChunk) Count() uint64 {
+	return c.count
+}
+
+func (c *DataChunk) SetCount(count uint64) {
+	c.count = count
+}
+
+func (c *DataChunk) ColumnCount() uint64 {
+	return uint64(len(c.Cols))
+}
+
+/*
 // Generate vecs of the same type as input.
 func NewDataChunkWithSpecificType(template *DataChunk) (*DataChunk, error) {
 	chunk := NewDataChunk(make([]*vector.Vector, 0))
@@ -93,3 +116,4 @@ func (d *DataChunk) Clean() {
 	d.cols = nil
 	d.row_size = 0
 }
+*/

@@ -37,6 +37,12 @@ func NewVector(phyType value.PhysicalType) *Vector {
 	panic("Unsupport now!")
 }
 
+func NewFromCache(cache *VectorCache) *Vector {
+	res := &Vector{}
+	cache.ResetVector(res)
+	return res
+}
+
 func GetColumn[T any](v *Vector) []T {
 	return v.Column.([]T)
 }
