@@ -2,15 +2,15 @@ package operator
 
 import (
 	"sync"
-	"tiny-db/src/common/value"
+	"tiny-db/src/common/types"
 	"tiny-db/src/execution/executor"
 )
 
 type innerHashState struct {
 	l     sync.Mutex
 	m     map[any]any
-	kType value.PhysicalType
-	vType value.PhysicalType
+	kType types.PhysicalType
+	vType types.PhysicalType
 }
 
 type InnerHash struct {
@@ -21,7 +21,7 @@ type InnerHash struct {
 	rchild executor.Operator
 }
 
-func NewInnerJoin(kType, vType value.PhysicalType, lchild, rchild executor.Operator) *InnerHash {
+func NewInnerJoin(kType, vType types.PhysicalType, lchild, rchild executor.Operator) *InnerHash {
 	var pi = new(InnerHash)
 	pi.operator.Op_type = executor.PhysicalHashJoin
 	pi.lchild = lchild

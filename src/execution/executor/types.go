@@ -72,3 +72,14 @@ func (o *Operator) IsEnd() bool {
 func (o *Operator) GetOperatorType() PhysicalOperatorType {
 	return o.Op_type
 }
+
+/** PipelineExecutor
+ *
+ */
+type PipelineExecutor struct {
+	executors []op
+	states    []any
+	chunks    []*storage.DataChunk
+
+	ispull bool // Need better name
+}

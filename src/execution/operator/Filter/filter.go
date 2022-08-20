@@ -2,6 +2,7 @@ package operator
 
 import (
 	"tiny-db/src/execution/executor"
+	"tiny-db/src/common/vector"
 	"tiny-db/src/storage"
 )
 
@@ -26,18 +27,18 @@ func (f *Filter) InitLocalStateForExecute() error {
 	return nil
 }
 
-func (f *Filter) Executor(input *storage.DataChunk, state any) (*storage.DataChunk, error) {
-	output, _ := storage.NewDataChunkWithSpecificType(input)
+func (f *Filter) Executor(input, output *storage.DataChunk, state any) error {
 
 	// hard code for now.
-	start := 0
-	// count := input.ChunkNum()
-	count := 10
+	sels := vector.NewSelVector()
+	for i := 0; i < 100; i++ {
+		sels.SetIndex(i, i + 50)
+	}
 
 	for i := 0; i < input.ColumnCount(); i++ {
-		from := input.GetVector(i)
-		to := output.GetVector(i)
-		to.Dup(from, start, count)
+		from := input.Cols[i]
+		from.Reference(output.Cols[i])
+		output.Cols[i].Slice(sels, 50)
 	}
-	return output, nil
+	return nil
 }
