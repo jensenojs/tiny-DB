@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"tiny-db/src/common/value"
+	"tiny-db/src/common/types"
 	"tiny-db/src/common/vector"
 )
 
@@ -15,7 +15,7 @@ type DataChunk struct {
 	capacity uint64
 }
 
-func NewDataChunk(types []value.PhysicalType) *DataChunk {
+func NewDataChunk(types []types.PhysicalType) *DataChunk {
 	chunk := &DataChunk{
 		Cols:     make([]*vector.Vector, len(types)),
 		cache:    make([]*vector.VectorCache, len(types)),
