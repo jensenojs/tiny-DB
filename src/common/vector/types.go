@@ -1,6 +1,8 @@
 package vector
 
-import "tiny-db/src/common/value"
+import (
+	"tiny-db/src/common/types"
+)
 
 type VectorBufferType int
 
@@ -12,6 +14,8 @@ const (
 	CHILD_VECTOR_BUFFER
 	//! Cache buffer for reset DataChunk
 	CACHE_VECTOR_BUFFER
+	//! Struct buffer for struct type
+	STRUCT_VECTOR_BUFFER
 )
 
 type VectorBuffer interface {
@@ -36,18 +40,22 @@ type Vector struct {
 	buffer     VectorBuffer
 	extra      VectorBuffer
 	Validality *ValidalityMask
-	phyType    value.PhysicalType
+	phyType    types.PhysicalType
 	Type       VectorType
 }
 
 type VectorCache struct {
 	buffer  VectorBuffer
-	phyType value.PhysicalType
+	phyType types.PhysicalType
 }
 
 type CacheBuffer struct {
 	Data    []byte
-	phyType value.PhysicalType
+	phyType types.PhysicalType
+}
+
+type StructBuffer struct {
+	childs []*Vector
 }
 
 /*

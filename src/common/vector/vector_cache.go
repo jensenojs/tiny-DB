@@ -2,10 +2,9 @@ package vector
 
 import (
 	"tiny-db/src/common/types"
-	"tiny-db/src/common/value"
 )
 
-func NewVectorCache(phyType value.PhysicalType) *VectorCache {
+func NewVectorCache(phyType types.PhysicalType) *VectorCache {
 	res := &VectorCache{
 		buffer:  NewCacheBuffer(phyType),
 		phyType: phyType,
@@ -24,9 +23,9 @@ func (b *VectorCache) ResetVector(v *Vector) {
 	v.extra = nil
 
 	switch v.phyType {
-	case value.INT32:
+	case types.INT32:
 		v.Column = types.DecodeToInt32(v.buffer.(*CacheBuffer).Data)
-	case value.STRING:
+	case types.STRING:
 		panic("TODO(lokax): ")
 	default:
 		panic("Unsupport type!")

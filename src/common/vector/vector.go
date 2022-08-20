@@ -17,9 +17,9 @@ const (
 )
 
 //! Create a vector, it's size is 1024
-func NewVector(phyType value.PhysicalType) *Vector {
+func NewVector(phyType types.PhysicalType) *Vector {
 	switch phyType {
-	case value.INT32:
+	case types.INT32:
 		buffer := NewFlatBuffer(4 * COMMON_VECTOR_SIZE)
 		col := types.DecodeToInt32(buffer.Data)
 		return &Vector{
@@ -31,7 +31,7 @@ func NewVector(phyType value.PhysicalType) *Vector {
 			Type:       FLAT_VECTOR,
 		}
 
-	case value.STRING:
+	case types.STRING:
 		// TODO(lokax):
 	}
 	panic("Unsupport now!")
@@ -64,14 +64,14 @@ func (v *Vector) GetValue(idx uint64) value.Value {
 		}
 	}
 	switch v.phyType {
-	case value.INT32:
+	case types.INT32:
 		rawVec := GetColumn[int32](valueVec)
 		mask := v.Validality
 		if !mask.RowIsValid(index) {
-			return value.NewNullValue(value.INT32)
+			return value.NewNullValue(types.INT32)
 		}
 		return value.NewInt(rawVec[index])
-	case value.STRING:
+	case types.STRING:
 		panic("TOOD(lokax): ")
 	default:
 		panic("Unsupport type")

@@ -1,6 +1,9 @@
 package value
 
-import "unsafe"
+import (
+	"tiny-db/src/common/types"
+	"unsafe"
+)
 
 type StringValue string
 
@@ -17,6 +20,6 @@ func (v *StringValue) ToString() string {
 	return string(*v)
 }
 
-func (v *StringValue) GetType() PhysicalType {
-	return STRING
+func (v *StringValue) GetType() types.PhysicalType {
+	return types.STRING
 }
