@@ -1,10 +1,5 @@
 package storage
 
-import (
-	"errors"
-	"tiny-db/src/common/vector"
-)
-
 /*
 type Student struct {
 	id   int32
