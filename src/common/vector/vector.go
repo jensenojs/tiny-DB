@@ -101,6 +101,11 @@ func (v *Vector) StructChilds() []*Vector {
 	return v.extra.(*StructBuffer).GetChilds()
 }
 
+func (v *Vector) SliceOther(rhs *Vector, sel *SelectionVector, count int) {
+	v.Reference(rhs)
+	v.Slice(sel, count)
+}
+
 //! Creates a reference to a slice of the other vector
 func (v *Vector) Slice(sel *SelectionVector, count int) {
 	switch v.Type {
