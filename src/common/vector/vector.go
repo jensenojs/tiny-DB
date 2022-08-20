@@ -110,6 +110,8 @@ func (v *Vector) SliceOther(rhs *Vector, sel *SelectionVector, count int) {
 	input: (x)[3, 5, 10, 3, 1]
 	expr: x <= 3
 	output: (x)[3, 3, 1]
+	selectVector: [0, 3, 4]
+	resultCount: 3
 
 	// code
 	resultCount := 0
