@@ -61,7 +61,7 @@ func (v *Vector) GetValue(idx uint64) value.Value {
 	case value.INT32:
 		rawVec := GetColumn[int32](valueVec)
 		mask := v.Validality
-		if !mask.RowIsValid(idx) {
+		if !mask.RowIsValid(index) {
 			return value.NewNullValue(value.INT32)
 		}
 		return value.NewInt(rawVec[index])
