@@ -46,3 +46,10 @@ func (c *DataChunk) SetCount(count int) {
 func (c *DataChunk) ColumnCount() int {
 	return len(c.Cols)
 }
+
+func (c *DataChunk) Slice(rhs *DataChunk, sel *vector.SelectionVector, count int) {
+	for i := 0; i < c.ColumnCount(); i++ {
+		c.Cols[i].SliceOther(rhs.Cols[i], sel, count)
+	}
+	c.count = count
+}
