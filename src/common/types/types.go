@@ -7,3 +7,9 @@ const (
 	STRING
 	STRUCT // Need More Info
 )
+
+type StringVec struct {
+	Data   []byte
+	Offset []int
+	Len    []int
+}
