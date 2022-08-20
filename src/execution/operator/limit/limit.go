@@ -32,15 +32,14 @@ func (l *Limit) InitLocalStateForExecute() error {
 	return nil
 }
 
-func (l *Limit) Execute(input *storage.DataChunk, state any) (*storage.DataChunk, error) {
+func (l *Limit) Execute(input, output *storage.DataChunk, state any) error {
 	ops := state.(limitState)
 	maxCount := l.limit + l.offset
 	if ops.cursor >= maxCount {
-		return storage.NewDataChunk(make([]*vector.Vector, 0)), nil
+		
 	}
 
 	curOffset := ops.cursor
-	output := storage.NewDataChunk(make([]*vector.Vector, 0))
 	start := 0
 	count := input.ChunkNum()
 

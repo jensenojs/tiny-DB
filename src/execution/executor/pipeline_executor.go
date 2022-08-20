@@ -4,17 +4,6 @@ import (
 	"tiny-db/src/storage"
 )
 
-/** PipelineExecutor
- *
- */
-type PipelineExecutor struct {
-	executors []op
-	states    []any
-	chunks    []*storage.DataChunk
-
-	ispull bool // Need better name
-}
-
 func NewPipelineExecutor(executors []op, ispull bool) (*PipelineExecutor, error) {
 	chunks := make([]*storage.DataChunk, len(executors))
 	states := make([]any, len(executors))
@@ -67,7 +56,7 @@ func (e *PipelineExecutor) Execute() error {
 func (e *PipelineExecutor) executePull() error {
 	// Set data in chunk[0] when pipeline is in source state.
 	e.executors[0].GetData(e.chunks[0], e.states[0])
-	if e.chunks[0].ChunkNum() == 0 {
+	if e.chunks[0].Count() == 0 {
 		return nil
 	}
 
@@ -82,7 +71,7 @@ func (e *PipelineExecutor) executePull() error {
 		if e.executors[i].IsPipelineBreaker() {
 			return nil
 		}
-		if cp.ChunkNum() == 0 {
+		if cp.Count() == 0 {
 			return nil
 		}
 	}
@@ -94,7 +83,7 @@ func (e *PipelineExecutor) executePull() error {
 func (e *PipelineExecutor) executePush() error {
 	// Set data in chunks[0] when pipeline is in source state.
 	e.executors[0].GetData(e.chunks[0], e.states[0])
-	if e.chunks[0].ChunkNum() == 0 {
+	if e.chunks[0].Count() == 0 {
 		return nil
 	}
 
@@ -111,7 +100,7 @@ func (e *PipelineExecutor) executePush() error {
 			return nil
 		}
 
-		if cp.ChunkNum() == 0 {
+		if cp.Count() == 0 {
 			needMaterialize = false
 			return nil
 		}
