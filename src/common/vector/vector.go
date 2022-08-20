@@ -73,6 +73,8 @@ func (v *Vector) GetValue(idx uint64) value.Value {
 		return value.NewInt(rawVec[index])
 	case types.STRING:
 		panic("TOOD(lokax): ")
+	case types.STRUCT:
+		panic("TODO(lokax): ")
 	default:
 		panic("Unsupport type")
 	}
@@ -90,6 +92,13 @@ func (v *Vector) GetChild() *Vector {
 		panic("must be dictionary vector")
 	}
 	return v.extra.(*ChildVectorBuffer).ChildVec
+}
+
+func (v *Vector) StructChilds() []*Vector {
+	if v.phyType != types.STRUCT {
+		panic("must be struct phyType")
+	}
+	return v.extra.(*StructBuffer).GetChilds()
 }
 
 //! Creates a reference to a slice of the other vector

@@ -5,6 +5,7 @@ import (
 	"tiny-db/src/common/vector"
 )
 
+/*
 type Student struct {
 	id   int32
 	name string
@@ -67,3 +68,4 @@ func (t *Table) GetRowsGroup(idx int) ([]*vector.Vector, error) {
 	res := []*vector.Vector{id_vec, name_vec, age_vec}
 	return res, nil
 }
+*/
