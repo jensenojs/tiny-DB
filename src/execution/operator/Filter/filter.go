@@ -7,12 +7,11 @@ import (
 )
 
 type filterState struct {
-	// hard code for now, need Expression
+	// TODO(Jensen): hard code for now, need Expression
 }
 
 type Filter struct {
 	executor.Operator
-	ops filterState
 
 	child executor.Operator	
 }
@@ -23,22 +22,24 @@ func NewFilter(child executor.Operator) *Filter {
 	return pf
 }
 
-func (f *Filter) InitLocalStateForExecute() error {
-	return nil
+func (f *Filter) InitLocalStateForExecute() (any, error) {
+	s := &filterState{}	
+	return s, nil
 }
 
-func (f *Filter) Executor(input, output *storage.DataChunk, state any) error {
+func (f *Filter) Execute(input, output *storage.DataChunk, state any) error {
 
-	// hard code for now.
 	sels := vector.NewSelVector()
-	for i := 0; i < 100; i++ {
-		sels.SetIndex(i, i + 50)
+	count := 0
+	for i := 0; i < input.Count(); i++ {
+		// need expression to decide whether this data selected.
+		// if input.Cols[1].GetValue(i) >= 100 {
+			sels.SetIndex(count, i)
+		// }
+		count++
 	}
 
-	for i := 0; i < input.ColumnCount(); i++ {
-		from := input.Cols[i]
-		from.Reference(output.Cols[i])
-		output.Cols[i].Slice(sels, 50)
-	}
+	output.Slice(input, sels, count)
+
 	return nil
 }
