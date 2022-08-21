@@ -21,10 +21,11 @@ func NewPipelineExecutor(executors []op, ispull bool) (*PipelineExecutor, error)
 		}
 	}
 
+	last := len(states) -1
 	if ispull {
-		states[len(states)-1], err = executors[len(executors)-1].InitLocalStateForExecute()
+		states[last], err = executors[len(executors)-1].InitLocalStateForExecute()
 	} else {
-		states[len(states)-1], err = executors[len(executors)-1].InitLocalStateForMaterialize()
+		states[last], err = executors[len(executors)-1].InitLocalStateForMaterialize(chunks[last - 1])
 	}
 
 	if err != nil {
@@ -105,8 +106,9 @@ func (e *PipelineExecutor) executePush() error {
 	}
 
 	// Materialize
+	last := len(e.chunks)-1
 	if needMaterialize {
-		e.executors[len(e.executors)-1].Materialize(e.chunks[len(e.chunks)-1])
+		e.executors[len(e.executors)-1].Materialize(e.chunks[last], e.states[last])
 	}
 
 	e.clean()

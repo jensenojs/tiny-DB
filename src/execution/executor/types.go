@@ -37,11 +37,11 @@ type PipelineExecutor struct {
 type op interface {
 	GetData(output *storage.DataChunk, state any) error
 	Execute(input, output *storage.DataChunk, state any) error
-	Materialize(output *storage.DataChunk, state any) error
+	Materialize(input *storage.DataChunk, state any) error
 
 	InitLocalStateForSource() (any, error)
 	InitLocalStateForExecute() (any, error)
-	InitLocalStateForMaterialize() (any, error)
+	InitLocalStateForMaterialize(mChunks []*storage.DataChunk) (any, error)
 
 	IsPipelineBreaker() bool
 	IsEnd(state any) bool
@@ -63,7 +63,7 @@ func (o *Operator) Execute(input, output *storage.DataChunk, state any) error {
 	return errors.New("not implemented")
 }
 
-func (o *Operator) Materialize(output *storage.DataChunk, state any) error {
+func (o *Operator) Materialize(input *storage.DataChunk, state any) error {
 	return errors.New("not implemented")
 }
 
@@ -75,7 +75,7 @@ func (o *Operator) InitLocalStateForExecute() (any, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (o *Operator) InitLocalStateForMaterialize() (any, error) {
+func (o *Operator) InitLocalStateForMaterialize(mChunks []*storage.DataChunk) (any, error) {
 	return nil, errors.New("not implemented")
 }
 
