@@ -25,7 +25,7 @@ func NewPipelineExecutor(executors []op, ispull bool) (*PipelineExecutor, error)
 	if ispull {
 		states[last], err = executors[len(executors)-1].InitLocalStateForExecute()
 	} else {
-		states[last], err = executors[len(executors)-1].InitLocalStateForMaterialize(chunks[last - 1])
+		states[last], err = executors[len(executors)-1].InitLocalStateForMaterialize()
 	}
 
 	if err != nil {

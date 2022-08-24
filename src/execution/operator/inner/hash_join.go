@@ -9,10 +9,11 @@ import (
 
 type innerHashState struct {
 	l sync.Mutex  // this mutex is used in join state in parallel build the hash table.
-	Sources []*storage.DataChunk
+	b *storage.DataChunk // build table
+
 	// TODO(Jensen) : Need a better way to implement hash map, to support different types of Value and multiple keys
 	// For now we have to use value.ToString() as keys, and the value of map is used to record the idxs of key appear
-	Map map[string][]int
+	m map[string][]int
 }
 
 type InnerHash struct {
@@ -30,45 +31,48 @@ func NewInnerJoin(mChunk []*storage.DataChunk, lchild, rchild executor.Operator)
 	return pi
 }
 
-func (i *InnerHash) InitLocalStateForMaterialize(mChunks []*storage.DataChunk) (any, error) {
+func (i *InnerHash) InitLocalStateForMaterialize() (any, error) {
 	s := &innerHashState{
 		// TODO(Jensen): Hard code for now, Need Customized hash map
-		Sources: mChunks,
-		Map: make(map[string][]int),
+		m: make(map[string][]int),
 	}
 	return s, nil
 }
 
 // the Build state of inner hash join.
-func (i *InnerHash) Materialize(input *storage.DataChunk, state any) error {
+func (i *InnerHash) Materialize(build *storage.DataChunk, state any) error {
 	ops := (state).(innerHashState)
-	hashMap := ops.Map
-	for i := 0; i < input.Count(); i++ {
-		key := input.Cols[0].GetValue(i).ToString()
+	ops.b = build
+	hashMap := ops.m
+	for i := 0; i < build.Count(); i++ {
+		key := build.Cols[0].GetValue(i).ToString()
 		// TODO(Jensen): Need Equal Conditional Expression to build the table.
-		hashMap[key] = []int{i}
+		hashMap[key] = append(hashMap[key], i)
 	}
 
 	return nil
 }
 
 // the Probe state of inner hash join.
-func (i *InnerHash) Execute(input, output *storage.DataChunk, state any) error {
+func (i *InnerHash) Execute(probe, result *storage.DataChunk, state any) error {
 	ops := (state).(innerHashState)
-	hashMap := ops.Map
+	hashMap := ops.m
 	sels := vector.NewSelVector()
 
 	resultCount := 0
-	for i := 0; i < input.Count(); i++ {
-		// TODO(Jensen) : Need expression Calculation to decide whether this key in hashMap, also need to decide which column
-		// chosen to be key, now just simply hard code.
-		key := input.Cols[0].GetValue(i).ToString()
+	for i := 0; i < probe.Count(); i++ {
+		// TODO(Jensen) : Need expression calculation to decide whether this key in hashMap
+		// also need to decide which column
+		// chosen to be key, now just simply hard code and use first column as key.
+		key := probe.Cols[0].GetValue(i).ToString()
 		if idxs, ok := hashMap[key]; ok {
 			sels.SetIndex(resultCount, idxs[0])
 			resultCount++
 		}
 	}
-	output.Slice(input, sels, resultCount)
+
+	// Need to concate two datachunk but not SLice from input.
+	result.Slice(probe, sels, resultCount)
 
 	return nil
 }

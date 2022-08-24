@@ -7,6 +7,7 @@ import (
 
 type PhysicalOperatorType int
 
+//go:generate go run golang.org/x/tools/cmd/stringer -type=PhysicalOperatorType  -trimprefix=Physical
 const (
 	PhysicalInvalid PhysicalOperatorType = iota
 	PhysicalTableScan
@@ -37,11 +38,11 @@ type PipelineExecutor struct {
 type op interface {
 	GetData(output *storage.DataChunk, state any) error
 	Execute(input, output *storage.DataChunk, state any) error
-	Materialize(input *storage.DataChunk, state any) error
+	Materialize(output *storage.DataChunk, state any) error
 
 	InitLocalStateForSource() (any, error)
 	InitLocalStateForExecute() (any, error)
-	InitLocalStateForMaterialize(mChunks []*storage.DataChunk) (any, error)
+	InitLocalStateForMaterialize() (any, error)
 
 	IsPipelineBreaker() bool
 	IsEnd(state any) bool
@@ -56,27 +57,27 @@ type Operator struct {
 }
 
 func (o *Operator) GetData(result *storage.DataChunk, state any) error {
-	return errors.New("not implemented")
+	return errors.New(o.Op_type.String() + "not implemented GetData")
 }
 
 func (o *Operator) Execute(input, output *storage.DataChunk, state any) error {
-	return errors.New("not implemented")
+	return errors.New(o.Op_type.String() + "not implemented Execute")
 }
 
-func (o *Operator) Materialize(input *storage.DataChunk, state any) error {
-	return errors.New("not implemented")
+func (o *Operator) Materialize(output *storage.DataChunk, state any) error {
+	return errors.New(o.Op_type.String() + "not implemented Materialize")
 }
 
 func (o *Operator) InitLocalStateForSource() (any, error) {
-	return nil, errors.New("not implemented")
+	return nil, errors.New(o.Op_type.String() + "not implemented InitLocalStateForSource")
 }
 
 func (o *Operator) InitLocalStateForExecute() (any, error) {
-	return nil, errors.New("not implemented")
+	return nil, errors.New(o.Op_type.String() + "not implemented InitLocalStateForExecute")
 }
 
-func (o *Operator) InitLocalStateForMaterialize(mChunks []*storage.DataChunk) (any, error) {
-	return nil, errors.New("not implemented")
+func (o *Operator) InitLocalStateForMaterialize() (any, error) {
+	return nil, errors.New(o.Op_type.String() + "not implemented InitLocalStateForMaterialize")
 }
 
 func (o *Operator) IsPipelineBreaker() bool {
