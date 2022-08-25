@@ -1,6 +1,9 @@
 package operator
 
 import (
+	"errors"
+	"tiny-db/src/common/types"
+	"tiny-db/src/common/vector"
 	"tiny-db/src/execution/executor"
 	"tiny-db/src/storage"
 )
@@ -11,31 +14,42 @@ type tableScanState struct {
 
 type TableScan struct {
 	executor.Operator
-	ops tableScanState
-
-	scan_table *storage.Table
 }
 
-func NewTableScan(t *storage.Table) *TableScan {
+func NewTableScan() *TableScan {
 	var pt = new(TableScan)
 	pt.Op_type = executor.PhysicalTableScan
-	pt.scan_table = t
 	return pt
 }
 
 func (t *TableScan) InitLocalStateForSource() (any, error) {
-	t.ops.scan_idx = 0
-	return t.ops, nil
+	return &tableScanState{}, nil
 }
 
 func (t *TableScan) GetData(result *storage.DataChunk, state any) error {
 	ops := state.(tableScanState)
-	vec, err := t.scan_table.GetRowsGroup(ops.scan_idx)
-	if err != nil {
-		return err
+	if ops.scan_idx >= 5 { // hard code here
+		return nil
+	}
+	/*
+		vec, err := t.scan_table.GetRowsGroup(ops.scan_idx)
+		if err != nil {
+			return err
+		}
+	*/
+
+	for i := 0; i < result.ColumnCount(); i++ {
+		col := result.Cols[i]
+		ptype := col.GetPhyType()
+		if ptype == types.INT32 {
+			rawVec := vector.GetColumn[int32](col)
+			for i := 0; i < vector.COMMON_VECTOR_SIZE; i++ {
+				rawVec[i] = int32(i + vector.COMMON_VECTOR_SIZE*ops.scan_idx)
+			}
+		} else {
+			return errors.New(t.Op_type.String() + ": Unspport phyType")
+		}
 	}
 	ops.scan_idx++
-	result = storage.NewDataChunk(vec)
-	println("column num is ", result.ColumnCount(), "row num is", vec[0].Size())
 	return nil
 }

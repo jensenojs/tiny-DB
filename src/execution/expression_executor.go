@@ -1,6 +1,7 @@
 package execution
 
 import (
+	"tiny-db/src/common/operation"
 	"tiny-db/src/common/types"
 	"tiny-db/src/common/vector"
 	"tiny-db/src/planner/expression"
@@ -58,11 +59,11 @@ func Eq(lhs *vector.Vector, rhs *vector.Vector, res *vector.Vector, sel *vector.
 		panic("Type mismatched!")
 	}
 	// TODO(): Need Merge Validality Mask
-	// rhs.Validality = lhs.Validality.Merge(rhs.Validality)
+	// res.Validality = lhs.Validality.Merge(rhs.Validality)
 	// Extract Selection Vector here, instead of pass in
 	switch lhs.GetPhyType() {
 	case types.INT32:
-		Equal(vector.GetColumn[int32](lhs), vector.GetColumn[int32](rhs), vector.GetColumn[bool](res), sel, count)
+		operation.Equal(vector.GetColumn[int32](lhs), vector.GetColumn[int32](rhs), vector.GetColumn[bool](res), sel, count)
 	default:
 		panic("Unsupport type!")
 	}
