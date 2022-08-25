@@ -1,7 +1,10 @@
 package operator
 
 import (
+	"errors"
 	"sync"
+	"tiny-db/src/common/types"
+	"tiny-db/src/common/value"
 	"tiny-db/src/common/vector"
 	"tiny-db/src/execution/executor"
 	"tiny-db/src/storage"
@@ -54,11 +57,10 @@ func (i *InnerHash) InitLocalStateForMaterialize() (any, error) {
 
 // the Build state of inner hash join.
 func (i *InnerHash) Materialize(build *storage.DataChunk, state any) error {
-	ops := (state).(innerHashState)
+	ops := (state).(*innerHashState)
 	hashMap := ops.m
-	buildChunks := ops.bs
-	ithChunk := len(buildChunks)
-	buildChunks = append(buildChunks, build)
+	ithChunk := len(ops.bs)
+	ops.bs = append(ops.bs, build)
 
 	for i := 0; i < build.Count(); i++ {
 		// TODO(Jensen): 1. Equal Conditional Expression to build the table. 2. select which col to build
@@ -71,9 +73,9 @@ func (i *InnerHash) Materialize(build *storage.DataChunk, state any) error {
 }
 
 // the Probe state of inner hash join.
-func (i *InnerHash) Execute(probe, result *storage.DataChunk, state any) error {
-	ops := (state).(innerHashState)
-	// buildChunks := ops.bs
+func (op *InnerHash) Execute(probe, result *storage.DataChunk, state any) error {
+	ops := (state).(*innerHashState)
+	buildChunks := ops.bs
 	hashMap := ops.m
 	probeSels := vector.NewSelVector()
 	buildSels := make([]*mapValue, 0)
@@ -96,27 +98,26 @@ func (i *InnerHash) Execute(probe, result *storage.DataChunk, state any) error {
 	// probe table
 	for i := 0; i < probe.ColumnCount(); i++ {
 		pcol := probe.Cols[i]
-		pcol.Slice(probeSels, resultCount)
-		result.Cols[i] = pcol
+		result.Cols[i].SliceOther(pcol, probeSels, resultCount)
 	}
 
 	// build table
-	// bias := probe.ColumnCount()
-	// for _, mv := range buildSels {
-	// 	ith, idx := mv.ithChunk, mv.idxInChunk
-	// 	for i := 0; i < buildChunks[0].ColumnCount(); i++ {
-	// 		bcol := result.Cols[i+bias]
-	// 		bv := buildChunks[ith].Cols[i].GetValue(idx)
-	// 		ptype := bcol.GetPhyType()
-	// 		if ptype == types.INT32 {
-	// 			rawVec := vector.GetColumn[int32](bcol)
-	// 			rawVec[idx] = bv
-	// 		} else {
-	// 			return errors.New(i.Op_type.String() + ": Unspport phyType")
-	// 		}
+	bias := probe.ColumnCount()
+	for _, mv := range buildSels {
+		ith, idx := mv.ithChunk, mv.idxInChunk
+		for i := 0; i < buildChunks[0].ColumnCount(); i++ {
+			bcol := result.Cols[i+bias]
+			bv := buildChunks[ith].Cols[i].GetValue(idx)
+			ptype := bcol.GetPhyType()
+			if ptype == types.INT32 {
+				rawVec := vector.GetColumn[int32](bcol)
+				rawVec[idx] = int32(*bv.(*value.IntValue))
+			} else {
+				return errors.New(op.Op_type.String() + ": Unspport phyType")
+			}
 
-	// 	}
-	// }
+		}
+	}
 
 	result.SetCount(resultCount)
 
