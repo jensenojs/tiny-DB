@@ -9,7 +9,7 @@ type VectorBufferType int
 const (
 	FLAT_VECTOR_BUFFER VectorBufferType = iota
 	//! For Slice
-	DICTIONARY_VECTO_BUFFER
+	DICTIONARY_VECTOR_BUFFER
 	//! Hold a child vector
 	CHILD_VECTOR_BUFFER
 	//! Cache buffer for reset DataChunk

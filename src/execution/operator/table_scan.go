@@ -31,12 +31,6 @@ func (t *TableScan) GetData(result *storage.DataChunk, state any) error {
 	if ops.scan_idx >= 5 { // hard code here
 		return nil
 	}
-	/*
-		vec, err := t.scan_table.GetRowsGroup(ops.scan_idx)
-		if err != nil {
-			return err
-		}
-	*/
 
 	for i := 0; i < result.ColumnCount(); i++ {
 		col := result.Cols[i]

@@ -7,7 +7,7 @@ func NewDictBuffer(selVec *SelectionVector) *DictVectorBuffer {
 }
 
 func (b *DictVectorBuffer) GetVectorBufferType() VectorBufferType {
-	return DICTIONARY_VECTO_BUFFER
+	return DICTIONARY_VECTOR_BUFFER
 }
 
 func (b DictVectorBuffer) GetSelVec() *SelectionVector {
