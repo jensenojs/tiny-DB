@@ -11,16 +11,16 @@ type limitState struct {
 }
 
 type Limit struct {
-	executor.Operator
+	operator
 
 	offset int
 	limit  int
-	child  executor.Operator
+	child  executor.Op
 }
 
-func NewLimit(offset, limit int, child executor.Operator) *Limit {
+func NewLimit(offset, limit int, child executor.Op) *Limit {
 	var pl = new(Limit)
-	pl.Op_type = executor.PhysicalLimit
+	pl.Op_type = PhysicalLimit
 	pl.offset = offset
 	pl.limit = limit
 	pl.child = child
@@ -28,12 +28,12 @@ func NewLimit(offset, limit int, child executor.Operator) *Limit {
 }
 
 func (l *Limit) InitLocalStateForExecute() (any, error) {
-	s := &limitState{cursor : 0}
+	s := &limitState{cursor: 0}
 	return s, nil
 }
 
 func (l *Limit) InitLocalStateForMaterialize() (any, error) {
-	s := &limitState{cursor : 0}
+	s := &limitState{cursor: 0}
 	return s, nil
 }
 

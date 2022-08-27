@@ -4,7 +4,6 @@ import (
 	"errors"
 	"tiny-db/src/common/types"
 	"tiny-db/src/common/vector"
-	"tiny-db/src/execution/executor"
 	"tiny-db/src/storage"
 )
 
@@ -13,12 +12,12 @@ type tableScanState struct {
 }
 
 type TableScan struct {
-	executor.Operator
+	operator
 }
 
 func NewTableScan() *TableScan {
 	var pt = new(TableScan)
-	pt.Op_type = executor.PhysicalTableScan
+	pt.Op_type = PhysicalTableScan
 	return pt
 }
 

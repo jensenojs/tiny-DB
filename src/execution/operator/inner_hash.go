@@ -25,10 +25,11 @@ type innerHashState struct {
 }
 
 type InnerHash struct {
-	executor.Operator
+	operator
 
-	lchild executor.Operator
-	rchild executor.Operator
+	lchild      executor.Op
+	rchild      executor.Op
+	globalState *innerHashState // for operators those have Materialize function, state must stored in inner.
 }
 
 func newMapValue(ith, idx int) *mapValue {
@@ -38,9 +39,9 @@ func newMapValue(ith, idx int) *mapValue {
 	}
 }
 
-func NewInnerJoin(mChunk []*storage.DataChunk, lchild, rchild executor.Operator) *InnerHash {
+func NewInnerJoin(mChunk []*storage.DataChunk, lchild, rchild executor.Op) *InnerHash {
 	var pi = new(InnerHash)
-	pi.Op_type = executor.PhysicalHashJoin
+	pi.Op_type = PhysicalHashJoin
 	pi.lchild = lchild
 	pi.rchild = rchild
 	return pi

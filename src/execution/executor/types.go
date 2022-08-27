@@ -1,20 +1,7 @@
 package executor
 
 import (
-	"errors"
 	"tiny-db/src/storage"
-)
-
-type PhysicalOperatorType int
-
-//go:generate go run golang.org/x/tools/cmd/stringer -type=PhysicalOperatorType  -trimprefix=Physical
-const (
-	PhysicalInvalid PhysicalOperatorType = iota
-	PhysicalTableScan
-	PhysicalFilter
-	PhysicalHashJoin
-	PhysicalLimit
-	PhysicalCollector
 )
 
 /** PipelineExecutor : Need more comments here.
@@ -32,7 +19,7 @@ type PipelineExecutor struct {
 	ispull bool // Need better name
 }
 
-/** Operator interface :
+/** operator interface :
  *  used in pipeline executor
  */
 type Op interface {
@@ -46,48 +33,4 @@ type Op interface {
 
 	IsPipelineBreaker() bool
 	IsEnd(state any) bool
-	GetOperatorType() PhysicalOperatorType
-}
-
-/** Op :
- * 	This struct is used to Inherited by a specific operator
- */
-type Operator struct {
-	Op_type PhysicalOperatorType
-}
-
-func (o *Operator) GetData(result *storage.DataChunk, state any) error {
-	return errors.New(o.Op_type.String() + "not implemented GetData")
-}
-
-func (o *Operator) Execute(input, output *storage.DataChunk, state any) error {
-	return errors.New(o.Op_type.String() + "not implemented Execute")
-}
-
-func (o *Operator) Materialize(output *storage.DataChunk, state any) error {
-	return errors.New(o.Op_type.String() + "not implemented Materialize")
-}
-
-func (o *Operator) InitLocalStateForSource() (any, error) {
-	return nil, errors.New(o.Op_type.String() + "not implemented InitLocalStateForSource")
-}
-
-func (o *Operator) InitLocalStateForExecute() (any, error) {
-	return nil, errors.New(o.Op_type.String() + "not implemented InitLocalStateForExecute")
-}
-
-func (o *Operator) InitLocalStateForMaterialize() (any, error) {
-	return nil, errors.New(o.Op_type.String() + "not implemented InitLocalStateForMaterialize")
-}
-
-func (o *Operator) IsPipelineBreaker() bool {
-	return false
-}
-
-func (o *Operator) IsEnd(state any) bool {
-	return false
-}
-
-func (o *Operator) GetOperatorType() PhysicalOperatorType {
-	return o.Op_type
 }

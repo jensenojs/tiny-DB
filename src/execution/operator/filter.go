@@ -11,19 +11,20 @@ type filterState struct {
 }
 
 type Filter struct {
-	executor.Operator
+	operator
 
-	child executor.Operator	
+	child executor.Op
 }
 
-func NewFilter(child executor.Operator) *Filter {
+func NewFilter(child executor.Op) *Filter {
 	var pf = new(Filter)
-	pf.Op_type = executor.PhysicalFilter
+	pf.Op_type = PhysicalFilter
+	pf.child = child
 	return pf
 }
 
 func (f *Filter) InitLocalStateForExecute() (any, error) {
-	s := &filterState{}	
+	s := &filterState{}
 	return s, nil
 }
 
@@ -34,7 +35,7 @@ func (f *Filter) Execute(input, output *storage.DataChunk, state any) error {
 	for i := 0; i < input.Count(); i++ {
 		// need expression to decide whether this data selected.
 		// if input.Cols[1].GetValue(i) >= 100 {
-			sels.SetIndex(count, i)
+		sels.SetIndex(count, i)
 		// }
 		count++
 	}
