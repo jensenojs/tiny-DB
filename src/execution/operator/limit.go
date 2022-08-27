@@ -38,7 +38,7 @@ func (l *Limit) InitLocalStateForMaterialize() (any, error) {
 }
 
 func (l *Limit) Execute(input, output *storage.DataChunk, state any) error {
-	ops := state.(limitState)
+	ops := state.(*limitState)
 	maxCount := l.limit + l.offset
 	if ops.cursor >= maxCount {
 		output.Reset()

@@ -27,7 +27,7 @@ func (t *TableScan) InitLocalStateForSource() (any, error) {
 }
 
 func (t *TableScan) GetData(result *storage.DataChunk, state any) error {
-	ops := state.(tableScanState)
+	ops := state.(*tableScanState)
 	if ops.scan_idx >= 5 { // hard code here
 		return nil
 	}
@@ -40,6 +40,7 @@ func (t *TableScan) GetData(result *storage.DataChunk, state any) error {
 			for i := 0; i < vector.COMMON_VECTOR_SIZE; i++ {
 				rawVec[i] = int32(i + vector.COMMON_VECTOR_SIZE*ops.scan_idx)
 			}
+			result.SetCount(vector.COMMON_VECTOR_SIZE)
 		} else {
 			return errors.New(t.Op_type.String() + ": Unspport phyType")
 		}

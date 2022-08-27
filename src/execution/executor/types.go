@@ -19,13 +19,13 @@ const (
 
 /** PipelineExecutor : Need more comments here.
  *
- *  In general, one pipeline can have multiple pipeline executors. 
- *  In this situation, it may not be a good idea to keep the runtime state inside the operator. 
+ *  In general, one pipeline can have multiple pipeline operators.
+ *  In this situation, it may not be a good idea to keep the runtime state inside the operator.
  *	Since there may be multiple threads computing for a single operator parallelly, and each thread need have their own local state.
- *  And that is why the states of executors stored in the pipeline executor.
+ *  And that is why the states of operators stored in the pipeline executor.
  */
 type PipelineExecutor struct {
-	executors []op
+	operators []Op
 	states    []any // Need some comments here.
 	chunks    []*storage.DataChunk
 
@@ -35,7 +35,7 @@ type PipelineExecutor struct {
 /** Operator interface :
  *  used in pipeline executor
  */
-type op interface {
+type Op interface {
 	GetData(output *storage.DataChunk, state any) error
 	Execute(input, output *storage.DataChunk, state any) error
 	Materialize(output *storage.DataChunk, state any) error

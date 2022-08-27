@@ -1,31 +1,40 @@
 package executor
 
 import (
-	"tiny-db/src/storage"
+	"tiny-db/src/common/types"
+	. "tiny-db/src/storage"
 )
 
-func NewPipelineExecutor(executors []op, ispull bool) (*PipelineExecutor, error) {
-	chunks := make([]*storage.DataChunk, len(executors))
-	states := make([]any, len(executors))
+func NewPipelineExecutor(operators []Op, ispull bool) (*PipelineExecutor, error) {
+	chunks := make([]*DataChunk, len(operators))
+	states := make([]any, len(operators))
 	var err error
 
-	states[0], err = executors[0].InitLocalStateForSource()
+	// Hard code to make chunks types
+	typs := make([]types.PhysicalType, 0)
+	typs = append(typs, types.INT32)
+	chunks[0] = NewDataChunk(typs)
+	states[0], err = operators[0].InitLocalStateForSource()
 	if err != nil {
 		return nil, err
 	}
 
-	for i := 1; i < len(executors)-1; i++ {
-		states[i], err = executors[i].InitLocalStateForExecute()
+	for i := 1; i < len(operators)-1; i++ {
+		states[i], err = operators[i].InitLocalStateForExecute()
 		if err != nil {
 			return nil, err
 		}
+		chunks[i] = NewDataChunk(typs)
 	}
 
-	last := len(states) -1
-	if ispull {
-		states[last], err = executors[len(executors)-1].InitLocalStateForExecute()
-	} else {
-		states[last], err = executors[len(executors)-1].InitLocalStateForMaterialize()
+	last := len(states) - 1
+	if last != 0 {
+		if ispull {
+			states[last], err = operators[len(operators)-1].InitLocalStateForExecute()
+		} else {
+			states[last], err = operators[len(operators)-1].InitLocalStateForMaterialize()
+		}
+		chunks[last] = NewDataChunk(typs)
 	}
 
 	if err != nil {
@@ -33,10 +42,10 @@ func NewPipelineExecutor(executors []op, ispull bool) (*PipelineExecutor, error)
 	}
 
 	return &PipelineExecutor{
-		executors: executors,
-		chunks: chunks,
-		states: states,
-		ispull: ispull,
+		operators: operators,
+		chunks:    chunks,
+		states:    states,
+		ispull:    ispull,
 	}, nil
 }
 
@@ -49,6 +58,7 @@ func (e *PipelineExecutor) Execute() error {
 	}
 
 	if err != nil {
+		e.clean()
 		return err
 	}
 	return nil
@@ -56,18 +66,19 @@ func (e *PipelineExecutor) Execute() error {
 
 func (e *PipelineExecutor) executePull() error {
 	// Set data in chunk[0] when pipeline is in source state.
-	e.executors[0].GetData(e.chunks[0], e.states[0])
+	e.operators[0].GetData(e.chunks[0], e.states[0])
 	if e.chunks[0].Count() == 0 {
 		return nil
 	}
 
 	// Execute
-	for i := 1; i < len(e.executors); i++ {
-		err := e.executors[i].Execute(e.chunks[i-1], e.chunks[i], e.states[i])
+	for i := 1; i < len(e.operators); i++ {
+		err := e.operators[i].Execute(e.chunks[i-1], e.chunks[i], e.states[i])
 		if err != nil {
+			e.clean()
 			return err
 		}
-		if e.executors[i].IsPipelineBreaker() {
+		if e.operators[i].IsPipelineBreaker() {
 			return nil
 		}
 		if e.chunks[i].Count() == 0 {
@@ -75,26 +86,26 @@ func (e *PipelineExecutor) executePull() error {
 		}
 	}
 
-	e.clean()
 	return nil
 }
 
 func (e *PipelineExecutor) executePush() error {
 	// Set data in chunks[0] when pipeline is in source state.
-	e.executors[0].GetData(e.chunks[0], e.states[0])
+	e.operators[0].GetData(e.chunks[0], e.states[0])
 	if e.chunks[0].Count() == 0 {
 		return nil
 	}
 
 	needMaterialize := true
 	// Execute
-	for i := 1; i < len(e.executors)-1; i++ {
-		err := e.executors[i].Execute(e.chunks[i-1], e.chunks[i], e.states[i])
+	for i := 1; i < len(e.operators)-1; i++ {
+		err := e.operators[i].Execute(e.chunks[i-1], e.chunks[i], e.states[i])
 		if err != nil {
+			e.clean()
 			return err
 		}
 
-		if e.executors[i].IsPipelineBreaker() {
+		if e.operators[i].IsPipelineBreaker() {
 			return nil
 		}
 
@@ -106,17 +117,16 @@ func (e *PipelineExecutor) executePush() error {
 	}
 
 	// Materialize
-	last := len(e.chunks)-1
-	if needMaterialize {
-		e.executors[len(e.executors)-1].Materialize(e.chunks[last], e.states[last])
+	last := len(e.chunks) - 1
+	if needMaterialize && last > 0 {
+		e.operators[len(e.operators)-1].Materialize(e.chunks[last], e.states[last])
 	}
 
-	e.clean()
 	return nil
 }
 
 func (e *PipelineExecutor) clean() {
-	e.executors = nil
+	e.operators = nil
 	e.chunks = nil
 	e.states = nil
 }
